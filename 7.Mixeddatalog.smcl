@@ -1,0 +1,431 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}C:\Users\hreef\OneDrive\Desktop\GEM.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}28 Mar 2019, 22:29:35
+
+{com}. do "C:\Users\hreef\AppData\Local\Temp\STD36c0_000000.tmp"
+{txt}
+{com}. gen period_3y=year
+{txt}
+{com}. recode period_3y 1995/1996=1 1997/1999=2 2000/2002=3 2003/2005=4 2006/2008=5 2009/2011=6 2012/2014=7
+{txt}(period_3y: 860 changes made)
+
+{com}. bysort code period_3y: egen rk=rank(year)
+{txt}
+{com}. drop if year<1995 
+{txt}(645 observations deleted)
+
+{com}. drop if year==2015
+{txt}(43 observations deleted)
+
+{com}. encode code,gen(id)
+{txt}
+{com}. gen bis_ratio=(bis_household/bis_total)*100
+{txt}(89 missing values generated)
+
+{com}. global Y bis_total bis_firm bis_household bis_ratio
+{txt}
+{com}. foreach x of varlist $Y {c -(}
+{txt}  2{com}. gen temp_min=`x' if rk==1 
+{txt}  3{com}. bysort code period_3y: egen MIN=min(temp_min)
+{txt}  4{com}. gen temp_max=`x' if rk==3 
+{txt}  5{com}. bysort code period_3y: egen MAX=min(temp_max)
+{txt}  6{com}. gen D`x'=MAX-MIN
+{txt}  7{com}. gen G`x'=(D`x'/MIN)*100
+{txt}  8{com}. gen FINAL`x'=MAX
+{txt}  9{com}. gen INITIAL`x'=MIN
+{txt} 10{com}. drop temp_* MIN MAX
+{txt} 11{com}. xtset id year
+{txt} 12{com}. gen g`x'=((`x'-L.`x')/L.`x')*100
+{txt} 13{com}. gen d`x'=(`x'-L.`x')
+{txt} 14{com}. {c )-}
+{txt}(599 missing values generated)
+(106 missing values generated)
+(618 missing values generated)
+(134 missing values generated)
+(164 missing values generated)
+(164 missing values generated)
+(134 missing values generated)
+(106 missing values generated)
+{res}{txt}{col 8}panel variable:  {res}id (strongly balanced)
+{txt}{col 9}time variable:  {res}{col 25}year, 1995 to 2014
+{txt}{col 17}delta:  {res}1 unit
+{txt}(132 missing values generated)
+(132 missing values generated)
+(599 missing values generated)
+(106 missing values generated)
+(618 missing values generated)
+(134 missing values generated)
+(164 missing values generated)
+(164 missing values generated)
+(134 missing values generated)
+(106 missing values generated)
+{res}{txt}{col 8}panel variable:  {res}id (strongly balanced)
+{txt}{col 9}time variable:  {res}{col 25}year, 1995 to 2014
+{txt}{col 17}delta:  {res}1 unit
+{txt}(132 missing values generated)
+(132 missing values generated)
+(597 missing values generated)
+(101 missing values generated)
+(618 missing values generated)
+(134 missing values generated)
+(161 missing values generated)
+(161 missing values generated)
+(134 missing values generated)
+(101 missing values generated)
+{res}{txt}{col 8}panel variable:  {res}id (strongly balanced)
+{txt}{col 9}time variable:  {res}{col 25}year, 1995 to 2014
+{txt}{col 17}delta:  {res}1 unit
+{txt}(129 missing values generated)
+(129 missing values generated)
+(599 missing values generated)
+(106 missing values generated)
+(618 missing values generated)
+(134 missing values generated)
+(164 missing values generated)
+(164 missing values generated)
+(134 missing values generated)
+(106 missing values generated)
+{res}{txt}{col 8}panel variable:  {res}id (strongly balanced)
+{txt}{col 9}time variable:  {res}{col 25}year, 1995 to 2014
+{txt}{col 17}delta:  {res}1 unit
+{txt}(132 missing values generated)
+(132 missing values generated)
+
+{com}. collapse (mean) $Y D* G* g* d* FINAL* INITIAL* wdi_gdppc wdi_inflation wdi_govexp wdi_trade,by(id period_3y)
+{txt}
+{com}. xtset id period_3y
+{res}{txt}{col 8}panel variable:  {res}id (strongly balanced)
+{txt}{col 9}time variable:  {res}{col 25}period_3y, 1 to 7
+{txt}{col 17}delta:  {res}1 unit
+{txt}
+{com}. gen Lincome=log(wdi_gdppc)
+{txt}
+{com}. gen Linflation=log(wdi_inflation)
+{txt}(10 missing values generated)
+
+{com}. gen Lgov=log(wdi_govexp)
+{txt}
+{com}. gen Ltrade=log(wdi_trade)
+{txt}
+{com}. global X L.Lincome L.Linflation L.Lgov L.Ltrade 
+{txt}
+{com}. foreach x in "total" "firm" "household" "ratio"  {c -(}
+{txt}  2{com}. xtreg gbis_`x' INITIALbis_`x' i.period_3y if INITIALbis_`x'!=., fe vce(cluster id)
+{txt}  3{com}. xtreg gbis_`x' INITIALbis_`x' $X i.period_3y if INITIALbis_`x'!=., fe vce(cluster id)
+{txt}  4{com}. {c )-}
+{res}
+{txt}Fixed-effects (within) regression{col 49}Number of obs{col 67}={col 69}{res}       261
+{txt}Group variable: {res}id{txt}{col 49}Number of groups{col 67}={col 69}{res}        43
+
+{txt}R-sq:{col 49}Obs per group:
+     within  = {res}0.1335{col 63}{txt}min{col 67}={col 69}{res}         2
+{txt}     between = {res}0.0084{col 63}{txt}avg{col 67}={col 69}{res}       6.1
+{txt}     overall = {res}0.0200{col 63}{txt}max{col 67}={col 69}{res}         7
+
+{txt}{col 49}F({res}7{txt},{res}42{txt}){col 67}={col 70}{res}     5.51
+{txt}corr(u_i, Xb){col 16}= {res}-0.6737{txt}{col 49}Prob > F{col 67}={col 73}{res}0.0002
+
+{txt}{ralign 82:(Std. Err. adjusted for {res:43} clusters in id)}
+{hline 17}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 18}{c |}{col 30}    Robust
+{col 1}      gbis_total{col 18}{c |}      Coef.{col 30}   Std. Err.{col 42}      t{col 50}   P>|t|{col 58}     [95% Con{col 71}f. Interval]
+{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+INITIALbis_total {c |}{col 18}{res}{space 2}-.0531488{col 30}{space 2} .0131121{col 41}{space 1}   -4.05{col 50}{space 3}0.000{col 58}{space 4}-.0796101{col 71}{space 3}-.0266875
+{txt}{space 16} {c |}
+{space 7}period_3y {c |}
+{space 14}2  {c |}{col 18}{res}{space 2} .7725919{col 30}{space 2} 1.069457{col 41}{space 1}    0.72{col 50}{space 3}0.474{col 58}{space 4} -1.38566{col 71}{space 3} 2.930844
+{txt}{space 14}3  {c |}{col 18}{res}{space 2} .6042547{col 30}{space 2} 1.538531{col 41}{space 1}    0.39{col 50}{space 3}0.696{col 58}{space 4}-2.500627{col 71}{space 3} 3.709137
+{txt}{space 14}4  {c |}{col 18}{res}{space 2}-.3192163{col 30}{space 2} 1.730808{col 41}{space 1}   -0.18{col 50}{space 3}0.855{col 58}{space 4}-3.812128{col 71}{space 3} 3.173695
+{txt}{space 14}5  {c |}{col 18}{res}{space 2} 3.565851{col 30}{space 2} 1.675448{col 41}{space 1}    2.13{col 50}{space 3}0.039{col 58}{space 4} .1846588{col 71}{space 3} 6.947043
+{txt}{space 14}6  {c |}{col 18}{res}{space 2} 1.593888{col 30}{space 2} 1.688262{col 41}{space 1}    0.94{col 50}{space 3}0.351{col 58}{space 4}-1.813162{col 71}{space 3} 5.000938
+{txt}{space 14}7  {c |}{col 18}{res}{space 2} 1.774261{col 30}{space 2} 1.734662{col 41}{space 1}    1.02{col 50}{space 3}0.312{col 58}{space 4}-1.726428{col 71}{space 3} 5.274951
+{txt}{space 16} {c |}
+{space 11}_cons {c |}{col 18}{res}{space 2} 8.252355{col 30}{space 2}  1.27568{col 41}{space 1}    6.47{col 50}{space 3}0.000{col 58}{space 4} 5.677927{col 71}{space 3} 10.82678
+{txt}{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+         sigma_u {c |} {res} 4.7780558
+         {txt}sigma_e {c |} {res} 4.7044492
+             {txt}rho {c |} {res} .50776188{txt}   (fraction of variance due to u_i)
+{hline 17}{c BT}{hline 64}
+{res}
+{txt}Fixed-effects (within) regression{col 49}Number of obs{col 67}={col 69}{res}       224
+{txt}Group variable: {res}id{txt}{col 49}Number of groups{col 67}={col 69}{res}        43
+
+{txt}R-sq:{col 49}Obs per group:
+     within  = {res}0.3086{col 63}{txt}min{col 67}={col 69}{res}         2
+{txt}     between = {res}0.0064{col 63}{txt}avg{col 67}={col 69}{res}       5.2
+{txt}     overall = {res}0.0004{col 63}{txt}max{col 67}={col 69}{res}         6
+
+{txt}{col 49}F({res}10{txt},{res}42{txt}){col 67}={col 70}{res}    10.36
+{txt}corr(u_i, Xb){col 16}= {res}-0.9666{txt}{col 49}Prob > F{col 67}={col 73}{res}0.0000
+
+{txt}{ralign 82:(Std. Err. adjusted for {res:43} clusters in id)}
+{hline 17}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 18}{c |}{col 30}    Robust
+{col 1}      gbis_total{col 18}{c |}      Coef.{col 30}   Std. Err.{col 42}      t{col 50}   P>|t|{col 58}     [95% Con{col 71}f. Interval]
+{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+INITIALbis_total {c |}{col 18}{res}{space 2}-.0683033{col 30}{space 2} .0104742{col 41}{space 1}   -6.52{col 50}{space 3}0.000{col 58}{space 4}-.0894412{col 71}{space 3}-.0471655
+{txt}{space 16} {c |}
+{space 9}Lincome {c |}
+{space 13}L1. {c |}{col 18}{res}{space 2} 19.02614{col 30}{space 2} 7.673583{col 41}{space 1}    2.48{col 50}{space 3}0.017{col 58}{space 4} 3.540226{col 71}{space 3} 34.51206
+{txt}{space 16} {c |}
+{space 6}Linflation {c |}
+{space 13}L1. {c |}{col 18}{res}{space 2}-1.152319{col 30}{space 2}  .827961{col 41}{space 1}   -1.39{col 50}{space 3}0.171{col 58}{space 4}-2.823212{col 71}{space 3} .5185741
+{txt}{space 16} {c |}
+{space 12}Lgov {c |}
+{space 13}L1. {c |}{col 18}{res}{space 2}-10.20893{col 30}{space 2} 5.395711{col 41}{space 1}   -1.89{col 50}{space 3}0.065{col 58}{space 4}-21.09791{col 71}{space 3} .6800573
+{txt}{space 16} {c |}
+{space 10}Ltrade {c |}
+{space 13}L1. {c |}{col 18}{res}{space 2}-5.192571{col 30}{space 2} 3.843497{col 41}{space 1}   -1.35{col 50}{space 3}0.184{col 58}{space 4}-12.94906{col 71}{space 3}  2.56392
+{txt}{space 16} {c |}
+{space 7}period_3y {c |}
+{space 14}3  {c |}{col 18}{res}{space 2}-1.099892{col 30}{space 2} .8939951{col 41}{space 1}   -1.23{col 50}{space 3}0.225{col 58}{space 4}-2.904048{col 71}{space 3} .7042628
+{txt}{space 14}4  {c |}{col 18}{res}{space 2}-2.692749{col 30}{space 2}  1.77596{col 41}{space 1}   -1.52{col 50}{space 3}0.137{col 58}{space 4}-6.276781{col 71}{space 3}  .891284
+{txt}{space 14}5  {c |}{col 18}{res}{space 2} .4520935{col 30}{space 2} 2.262516{col 41}{space 1}    0.20{col 50}{space 3}0.843{col 58}{space 4}-4.113848{col 71}{space 3} 5.018035
+{txt}{space 14}6  {c |}{col 18}{res}{space 2}-2.192334{col 30}{space 2} 2.520284{col 41}{space 1}   -0.87{col 50}{space 3}0.389{col 58}{space 4}-7.278473{col 71}{space 3} 2.893805
+{txt}{space 14}7  {c |}{col 18}{res}{space 2}-2.187527{col 30}{space 2} 2.888016{col 41}{space 1}   -0.76{col 50}{space 3}0.453{col 58}{space 4}-8.015779{col 71}{space 3} 3.640725
+{txt}{space 16} {c |}
+{space 11}_cons {c |}{col 18}{res}{space 2}-124.8268{col 30}{space 2} 78.51717{col 41}{space 1}   -1.59{col 50}{space 3}0.119{col 58}{space 4}-283.2809{col 71}{space 3} 33.62725
+{txt}{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+         sigma_u {c |} {res} 15.770505
+         {txt}sigma_e {c |} {res} 4.1795489
+             {txt}rho {c |} {res} .93437225{txt}   (fraction of variance due to u_i)
+{hline 17}{c BT}{hline 64}
+{res}
+{txt}Fixed-effects (within) regression{col 49}Number of obs{col 67}={col 69}{res}       261
+{txt}Group variable: {res}id{txt}{col 49}Number of groups{col 67}={col 69}{res}        43
+
+{txt}R-sq:{col 49}Obs per group:
+     within  = {res}0.1732{col 63}{txt}min{col 67}={col 69}{res}         2
+{txt}     between = {res}0.1566{col 63}{txt}avg{col 67}={col 69}{res}       6.1
+{txt}     overall = {res}0.0111{col 63}{txt}max{col 67}={col 69}{res}         7
+
+{txt}{col 49}F({res}7{txt},{res}42{txt}){col 67}={col 70}{res}     5.96
+{txt}corr(u_i, Xb){col 16}= {res}-0.6513{txt}{col 49}Prob > F{col 67}={col 73}{res}0.0001
+
+{txt}{ralign 81:(Std. Err. adjusted for {res:43} clusters in id)}
+{hline 16}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 17}{c |}{col 29}    Robust
+{col 1}      gbis_firm{col 17}{c |}      Coef.{col 29}   Std. Err.{col 41}      t{col 49}   P>|t|{col 57}     [95% Con{col 70}f. Interval]
+{hline 16}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+INITIALbis_firm {c |}{col 17}{res}{space 2}-.0700108{col 29}{space 2} .0158783{col 40}{space 1}   -4.41{col 49}{space 3}0.000{col 57}{space 4}-.1020546{col 70}{space 3}-.0379671
+{txt}{space 15} {c |}
+{space 6}period_3y {c |}
+{space 13}2  {c |}{col 17}{res}{space 2} 1.274065{col 29}{space 2} 1.254886{col 40}{space 1}    1.02{col 49}{space 3}0.316{col 57}{space 4}-1.258398{col 70}{space 3} 3.806529
+{txt}{space 13}3  {c |}{col 17}{res}{space 2} .4923707{col 29}{space 2} 1.702778{col 40}{space 1}    0.29{col 49}{space 3}0.774{col 57}{space 4}-2.943975{col 70}{space 3} 3.928716
+{txt}{space 13}4  {c |}{col 17}{res}{space 2}-2.572137{col 29}{space 2} 1.730806{col 40}{space 1}   -1.49{col 49}{space 3}0.145{col 57}{space 4}-6.065045{col 70}{space 3} .9207717
+{txt}{space 13}5  {c |}{col 17}{res}{space 2} 3.877517{col 29}{space 2} 1.698567{col 40}{space 1}    2.28{col 49}{space 3}0.028{col 57}{space 4} .4496713{col 70}{space 3} 7.305363
+{txt}{space 13}6  {c |}{col 17}{res}{space 2} .4766808{col 29}{space 2}   1.5943{col 40}{space 1}    0.30{col 49}{space 3}0.766{col 57}{space 4}-2.740748{col 70}{space 3} 3.694109
+{txt}{space 13}7  {c |}{col 17}{res}{space 2} 1.985211{col 29}{space 2}  1.63109{col 40}{space 1}    1.22{col 49}{space 3}0.230{col 57}{space 4}-1.306463{col 70}{space 3} 5.276885
+{txt}{space 15} {c |}
+{space 10}_cons {c |}{col 17}{res}{space 2} 6.879831{col 29}{space 2} 1.174515{col 40}{space 1}    5.86{col 49}{space 3}0.000{col 57}{space 4} 4.509564{col 70}{space 3} 9.250097
+{txt}{hline 16}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+        sigma_u {c |} {res} 5.3707066
+        {txt}sigma_e {c |} {res} 5.3932013
+            {txt}rho {c |} {res} .49791018{txt}   (fraction of variance due to u_i)
+{hline 16}{c BT}{hline 64}
+{res}
+{txt}Fixed-effects (within) regression{col 49}Number of obs{col 67}={col 69}{res}       224
+{txt}Group variable: {res}id{txt}{col 49}Number of groups{col 67}={col 69}{res}        43
+
+{txt}R-sq:{col 49}Obs per group:
+     within  = {res}0.3632{col 63}{txt}min{col 67}={col 69}{res}         2
+{txt}     between = {res}0.0000{col 63}{txt}avg{col 67}={col 69}{res}       5.2
+{txt}     overall = {res}0.0072{col 63}{txt}max{col 67}={col 69}{res}         6
+
+{txt}{col 49}F({res}10{txt},{res}42{txt}){col 67}={col 70}{res}    10.67
+{txt}corr(u_i, Xb){col 16}= {res}-0.9786{txt}{col 49}Prob > F{col 67}={col 73}{res}0.0000
+
+{txt}{ralign 81:(Std. Err. adjusted for {res:43} clusters in id)}
+{hline 16}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 17}{c |}{col 29}    Robust
+{col 1}      gbis_firm{col 17}{c |}      Coef.{col 29}   Std. Err.{col 41}      t{col 49}   P>|t|{col 57}     [95% Con{col 70}f. Interval]
+{hline 16}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+INITIALbis_firm {c |}{col 17}{res}{space 2} -.082778{col 29}{space 2} .0131288{col 40}{space 1}   -6.31{col 49}{space 3}0.000{col 57}{space 4} -.109273{col 70}{space 3}-.0562829
+{txt}{space 15} {c |}
+{space 8}Lincome {c |}
+{space 12}L1. {c |}{col 17}{res}{space 2} 24.56085{col 29}{space 2} 8.761537{col 40}{space 1}    2.80{col 49}{space 3}0.008{col 57}{space 4} 6.879355{col 70}{space 3} 42.24235
+{txt}{space 15} {c |}
+{space 5}Linflation {c |}
+{space 12}L1. {c |}{col 17}{res}{space 2}-1.592502{col 29}{space 2} 1.112296{col 40}{space 1}   -1.43{col 49}{space 3}0.160{col 57}{space 4}-3.837207{col 70}{space 3} .6522027
+{txt}{space 15} {c |}
+{space 11}Lgov {c |}
+{space 12}L1. {c |}{col 17}{res}{space 2}-5.483417{col 29}{space 2} 6.839507{col 40}{space 1}   -0.80{col 49}{space 3}0.427{col 57}{space 4} -19.2861{col 70}{space 3} 8.319268
+{txt}{space 15} {c |}
+{space 9}Ltrade {c |}
+{space 12}L1. {c |}{col 17}{res}{space 2}-5.833403{col 29}{space 2} 4.604478{col 40}{space 1}   -1.27{col 49}{space 3}0.212{col 57}{space 4}-15.12562{col 70}{space 3}  3.45881
+{txt}{space 15} {c |}
+{space 6}period_3y {c |}
+{space 13}3  {c |}{col 17}{res}{space 2}-2.145804{col 29}{space 2}  1.08053{col 40}{space 1}   -1.99{col 49}{space 3}0.054{col 57}{space 4}-4.326402{col 70}{space 3} .0347938
+{txt}{space 13}4  {c |}{col 17}{res}{space 2}-6.538016{col 29}{space 2}  1.94677{col 40}{space 1}   -3.36{col 49}{space 3}0.002{col 57}{space 4}-10.46676{col 70}{space 3}-2.609275
+{txt}{space 13}5  {c |}{col 17}{res}{space 2}-1.427332{col 29}{space 2} 2.545874{col 40}{space 1}   -0.56{col 49}{space 3}0.578{col 57}{space 4}-6.565114{col 70}{space 3}  3.71045
+{txt}{space 13}6  {c |}{col 17}{res}{space 2}-5.794929{col 29}{space 2} 2.983047{col 40}{space 1}   -1.94{col 49}{space 3}0.059{col 57}{space 4}-11.81496{col 70}{space 3} .2251035
+{txt}{space 13}7  {c |}{col 17}{res}{space 2}-5.141219{col 29}{space 2} 3.459041{col 40}{space 1}   -1.49{col 49}{space 3}0.145{col 57}{space 4}-12.12185{col 70}{space 3} 1.839408
+{txt}{space 15} {c |}
+{space 10}_cons {c |}{col 17}{res}{space 2}-190.6915{col 29}{space 2} 92.67551{col 40}{space 1}   -2.06{col 49}{space 3}0.046{col 57}{space 4}-377.7182{col 70}{space 3}-3.664719
+{txt}{hline 16}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+        sigma_u {c |} {res} 22.844988
+        {txt}sigma_e {c |} {res} 4.7953245
+            {txt}rho {c |} {res} .95779846{txt}   (fraction of variance due to u_i)
+{hline 16}{c BT}{hline 64}
+{res}
+{txt}Fixed-effects (within) regression{col 49}Number of obs{col 67}={col 69}{res}       263
+{txt}Group variable: {res}id{txt}{col 49}Number of groups{col 67}={col 69}{res}        43
+
+{txt}R-sq:{col 49}Obs per group:
+     within  = {res}0.1445{col 63}{txt}min{col 67}={col 69}{res}         2
+{txt}     between = {res}0.1662{col 63}{txt}avg{col 67}={col 69}{res}       6.1
+{txt}     overall = {res}0.1367{col 63}{txt}max{col 67}={col 69}{res}         7
+
+{txt}{col 49}F({res}7{txt},{res}42{txt}){col 67}={col 70}{res}     7.33
+{txt}corr(u_i, Xb){col 16}= {res}-0.4781{txt}{col 49}Prob > F{col 67}={col 73}{res}0.0000
+
+{txt}{ralign 86:(Std. Err. adjusted for {res:43} clusters in id)}
+{hline 21}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 22}{c |}{col 34}    Robust
+{col 1}      gbis_household{col 22}{c |}      Coef.{col 34}   Std. Err.{col 46}      t{col 54}   P>|t|{col 62}     [95% Con{col 75}f. Interval]
+{hline 21}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+INITIALbis_household {c |}{col 22}{res}{space 2}-.2169056{col 34}{space 2} .0497108{col 45}{space 1}   -4.36{col 54}{space 3}0.000{col 62}{space 4}-.3172261{col 75}{space 3}-.1165851
+{txt}{space 20} {c |}
+{space 11}period_3y {c |}
+{space 18}2  {c |}{col 22}{res}{space 2}-.1254906{col 34}{space 2} 2.078712{col 45}{space 1}   -0.06{col 54}{space 3}0.952{col 62}{space 4}-4.320502{col 75}{space 3} 4.069521
+{txt}{space 18}3  {c |}{col 22}{res}{space 2} 1.603867{col 34}{space 2} 3.206722{col 45}{space 1}    0.50{col 54}{space 3}0.620{col 62}{space 4} -4.86756{col 75}{space 3} 8.075294
+{txt}{space 18}4  {c |}{col 22}{res}{space 2} 6.175281{col 34}{space 2} 3.208658{col 45}{space 1}    1.92{col 54}{space 3}0.061{col 62}{space 4} -.300052{col 75}{space 3} 12.65061
+{txt}{space 18}5  {c |}{col 22}{res}{space 2} 4.061055{col 34}{space 2} 3.188008{col 45}{space 1}    1.27{col 54}{space 3}0.210{col 62}{space 4}-2.372606{col 75}{space 3} 10.49472
+{txt}{space 18}6  {c |}{col 22}{res}{space 2} 2.897287{col 34}{space 2} 3.373007{col 45}{space 1}    0.86{col 54}{space 3}0.395{col 62}{space 4}-3.909717{col 75}{space 3} 9.704291
+{txt}{space 18}7  {c |}{col 22}{res}{space 2} 1.224914{col 34}{space 2} 3.273385{col 45}{space 1}    0.37{col 54}{space 3}0.710{col 62}{space 4}-5.381044{col 75}{space 3} 7.830873
+{txt}{space 20} {c |}
+{space 15}_cons {c |}{col 22}{res}{space 2} 12.92843{col 34}{space 2}  2.40667{col 45}{space 1}    5.37{col 54}{space 3}0.000{col 62}{space 4} 8.071573{col 75}{space 3} 17.78529
+{txt}{hline 21}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+             sigma_u {c |} {res} 6.9663414
+             {txt}sigma_e {c |} {res} 8.0794658
+                 {txt}rho {c |} {res} .42642037{txt}   (fraction of variance due to u_i)
+{hline 21}{c BT}{hline 64}
+{res}
+{txt}Fixed-effects (within) regression{col 49}Number of obs{col 67}={col 69}{res}       225
+{txt}Group variable: {res}id{txt}{col 49}Number of groups{col 67}={col 69}{res}        43
+
+{txt}R-sq:{col 49}Obs per group:
+     within  = {res}0.3141{col 63}{txt}min{col 67}={col 69}{res}         2
+{txt}     between = {res}0.0906{col 63}{txt}avg{col 67}={col 69}{res}       5.2
+{txt}     overall = {res}0.0853{col 63}{txt}max{col 67}={col 69}{res}         6
+
+{txt}{col 49}F({res}10{txt},{res}42{txt}){col 67}={col 70}{res}     6.29
+{txt}corr(u_i, Xb){col 16}= {res}-0.9748{txt}{col 49}Prob > F{col 67}={col 73}{res}0.0000
+
+{txt}{ralign 86:(Std. Err. adjusted for {res:43} clusters in id)}
+{hline 21}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 22}{c |}{col 34}    Robust
+{col 1}      gbis_household{col 22}{c |}      Coef.{col 34}   Std. Err.{col 46}      t{col 54}   P>|t|{col 62}     [95% Con{col 75}f. Interval]
+{hline 21}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+INITIALbis_household {c |}{col 22}{res}{space 2}-.1820961{col 34}{space 2}  .066472{col 45}{space 1}   -2.74{col 54}{space 3}0.009{col 62}{space 4} -.316242{col 75}{space 3}-.0479503
+{txt}{space 20} {c |}
+{space 13}Lincome {c |}
+{space 17}L1. {c |}{col 22}{res}{space 2}-24.65621{col 34}{space 2} 12.59792{col 45}{space 1}   -1.96{col 54}{space 3}0.057{col 62}{space 4}-50.07985{col 75}{space 3} .7674197
+{txt}{space 20} {c |}
+{space 10}Linflation {c |}
+{space 17}L1. {c |}{col 22}{res}{space 2} 1.793583{col 34}{space 2} .7870275{col 45}{space 1}    2.28{col 54}{space 3}0.028{col 62}{space 4} .2052968{col 75}{space 3} 3.381868
+{txt}{space 20} {c |}
+{space 16}Lgov {c |}
+{space 17}L1. {c |}{col 22}{res}{space 2}-23.69407{col 34}{space 2} 9.498588{col 45}{space 1}   -2.49{col 54}{space 3}0.017{col 62}{space 4}  -42.863{col 75}{space 3}-4.525147
+{txt}{space 20} {c |}
+{space 14}Ltrade {c |}
+{space 17}L1. {c |}{col 22}{res}{space 2} 2.242161{col 34}{space 2} 7.015514{col 45}{space 1}    0.32{col 54}{space 3}0.751{col 62}{space 4}-11.91572{col 75}{space 3} 16.40004
+{txt}{space 20} {c |}
+{space 11}period_3y {c |}
+{space 18}3  {c |}{col 22}{res}{space 2} 3.563014{col 34}{space 2} 2.080786{col 45}{space 1}    1.71{col 54}{space 3}0.094{col 62}{space 4}-.6361816{col 75}{space 3}  7.76221
+{txt}{space 18}4  {c |}{col 22}{res}{space 2}  9.63234{col 34}{space 2} 2.998191{col 45}{space 1}    3.21{col 54}{space 3}0.003{col 62}{space 4} 3.581746{col 75}{space 3} 15.68293
+{txt}{space 18}5  {c |}{col 22}{res}{space 2} 9.850145{col 34}{space 2} 3.104413{col 45}{space 1}    3.17{col 54}{space 3}0.003{col 62}{space 4} 3.585186{col 75}{space 3}  16.1151
+{txt}{space 18}6  {c |}{col 22}{res}{space 2} 9.336893{col 34}{space 2} 3.727574{col 45}{space 1}    2.50{col 54}{space 3}0.016{col 62}{space 4} 1.814344{col 75}{space 3} 16.85944
+{txt}{space 18}7  {c |}{col 22}{res}{space 2} 10.86841{col 34}{space 2}  3.85935{col 45}{space 1}    2.82{col 54}{space 3}0.007{col 62}{space 4}  3.07993{col 75}{space 3}  18.6569
+{txt}{space 20} {c |}
+{space 15}_cons {c |}{col 22}{res}{space 2} 308.3334{col 34}{space 2} 130.1091{col 45}{space 1}    2.37{col 54}{space 3}0.022{col 62}{space 4}  45.7626{col 75}{space 3} 570.9042
+{txt}{hline 21}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+             sigma_u {c |} {res} 32.260048
+             {txt}sigma_e {c |} {res} 6.6637497
+                 {txt}rho {c |} {res}  .9590776{txt}   (fraction of variance due to u_i)
+{hline 21}{c BT}{hline 64}
+{res}
+{txt}Fixed-effects (within) regression{col 49}Number of obs{col 67}={col 69}{res}       261
+{txt}Group variable: {res}id{txt}{col 49}Number of groups{col 67}={col 69}{res}        43
+
+{txt}R-sq:{col 49}Obs per group:
+     within  = {res}0.2690{col 63}{txt}min{col 67}={col 69}{res}         2
+{txt}     between = {res}0.1609{col 63}{txt}avg{col 67}={col 69}{res}       6.1
+{txt}     overall = {res}0.1692{col 63}{txt}max{col 67}={col 69}{res}         7
+
+{txt}{col 49}F({res}7{txt},{res}42{txt}){col 67}={col 70}{res}     7.34
+{txt}corr(u_i, Xb){col 16}= {res}-0.6898{txt}{col 49}Prob > F{col 67}={col 73}{res}0.0000
+
+{txt}{ralign 82:(Std. Err. adjusted for {res:43} clusters in id)}
+{hline 17}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 18}{c |}{col 30}    Robust
+{col 1}      gbis_ratio{col 18}{c |}      Coef.{col 30}   Std. Err.{col 42}      t{col 50}   P>|t|{col 58}     [95% Con{col 71}f. Interval]
+{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+INITIALbis_ratio {c |}{col 18}{res}{space 2}-.5567369{col 30}{space 2}  .108202{col 41}{space 1}   -5.15{col 50}{space 3}0.000{col 58}{space 4}-.7750974{col 71}{space 3}-.3383765
+{txt}{space 16} {c |}
+{space 7}period_3y {c |}
+{space 14}2  {c |}{col 18}{res}{space 2}-.4320189{col 30}{space 2} 1.569689{col 41}{space 1}   -0.28{col 50}{space 3}0.784{col 58}{space 4}-3.599779{col 71}{space 3} 2.735741
+{txt}{space 14}3  {c |}{col 18}{res}{space 2} 1.992231{col 30}{space 2} 2.551652{col 41}{space 1}    0.78{col 50}{space 3}0.439{col 58}{space 4} -3.15721{col 71}{space 3} 7.141673
+{txt}{space 14}4  {c |}{col 18}{res}{space 2} 7.796527{col 30}{space 2} 2.502232{col 41}{space 1}    3.12{col 50}{space 3}0.003{col 58}{space 4} 2.746819{col 71}{space 3} 12.84624
+{txt}{space 14}5  {c |}{col 18}{res}{space 2} 3.216071{col 30}{space 2} 2.403925{col 41}{space 1}    1.34{col 50}{space 3}0.188{col 58}{space 4}-1.635247{col 71}{space 3} 8.067388
+{txt}{space 14}6  {c |}{col 18}{res}{space 2} 3.561781{col 30}{space 2} 1.942464{col 41}{space 1}    1.83{col 50}{space 3}0.074{col 58}{space 4}-.3582694{col 71}{space 3} 7.481831
+{txt}{space 14}7  {c |}{col 18}{res}{space 2} 2.089677{col 30}{space 2} 1.871526{col 41}{space 1}    1.12{col 50}{space 3}0.271{col 58}{space 4}-1.687214{col 71}{space 3} 5.866569
+{txt}{space 16} {c |}
+{space 11}_cons {c |}{col 18}{res}{space 2} 19.25909{col 30}{space 2} 3.960238{col 41}{space 1}    4.86{col 50}{space 3}0.000{col 58}{space 4} 11.26701{col 71}{space 3} 27.25118
+{txt}{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+         sigma_u {c |} {res} 6.7346412
+         {txt}sigma_e {c |} {res} 6.4594265
+             {txt}rho {c |} {res}  .5208499{txt}   (fraction of variance due to u_i)
+{hline 17}{c BT}{hline 64}
+{res}
+{txt}Fixed-effects (within) regression{col 49}Number of obs{col 67}={col 69}{res}       224
+{txt}Group variable: {res}id{txt}{col 49}Number of groups{col 67}={col 69}{res}        43
+
+{txt}R-sq:{col 49}Obs per group:
+     within  = {res}0.4892{col 63}{txt}min{col 67}={col 69}{res}         2
+{txt}     between = {res}0.1406{col 63}{txt}avg{col 67}={col 69}{res}       5.2
+{txt}     overall = {res}0.1115{col 63}{txt}max{col 67}={col 69}{res}         6
+
+{txt}{col 49}F({res}10{txt},{res}42{txt}){col 67}={col 70}{res}     7.74
+{txt}corr(u_i, Xb){col 16}= {res}-0.9858{txt}{col 49}Prob > F{col 67}={col 73}{res}0.0000
+
+{txt}{ralign 82:(Std. Err. adjusted for {res:43} clusters in id)}
+{hline 17}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 18}{c |}{col 30}    Robust
+{col 1}      gbis_ratio{col 18}{c |}      Coef.{col 30}   Std. Err.{col 42}      t{col 50}   P>|t|{col 58}     [95% Con{col 71}f. Interval]
+{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+INITIALbis_ratio {c |}{col 18}{res}{space 2}-.2835886{col 30}{space 2} .0967776{col 41}{space 1}   -2.93{col 50}{space 3}0.005{col 58}{space 4}-.4788937{col 71}{space 3}-.0882835
+{txt}{space 16} {c |}
+{space 9}Lincome {c |}
+{space 13}L1. {c |}{col 18}{res}{space 2}-34.06777{col 30}{space 2} 9.204185{col 41}{space 1}   -3.70{col 50}{space 3}0.001{col 58}{space 4}-52.64257{col 71}{space 3}-15.49297
+{txt}{space 16} {c |}
+{space 6}Linflation {c |}
+{space 13}L1. {c |}{col 18}{res}{space 2} 1.950857{col 30}{space 2} 1.094301{col 41}{space 1}    1.78{col 50}{space 3}0.082{col 58}{space 4}-.2575314{col 71}{space 3} 4.159245
+{txt}{space 16} {c |}
+{space 12}Lgov {c |}
+{space 13}L1. {c |}{col 18}{res}{space 2}-13.99595{col 30}{space 2}  8.19927{col 41}{space 1}   -1.71{col 50}{space 3}0.095{col 58}{space 4}-30.54275{col 71}{space 3} 2.550843
+{txt}{space 16} {c |}
+{space 10}Ltrade {c |}
+{space 13}L1. {c |}{col 18}{res}{space 2} 7.355859{col 30}{space 2} 4.590976{col 41}{space 1}    1.60{col 50}{space 3}0.117{col 58}{space 4}-1.909105{col 71}{space 3} 16.62082
+{txt}{space 16} {c |}
+{space 7}period_3y {c |}
+{space 14}3  {c |}{col 18}{res}{space 2} 4.158483{col 30}{space 2} 1.655906{col 41}{space 1}    2.51{col 50}{space 3}0.016{col 58}{space 4} .8167292{col 71}{space 3} 7.500238
+{txt}{space 14}4  {c |}{col 18}{res}{space 2}  10.9573{col 30}{space 2} 2.274774{col 41}{space 1}    4.82{col 50}{space 3}0.000{col 58}{space 4} 6.366623{col 71}{space 3} 15.54798
+{txt}{space 14}5  {c |}{col 18}{res}{space 2}  8.14971{col 30}{space 2} 2.398485{col 41}{space 1}    3.40{col 50}{space 3}0.001{col 58}{space 4} 3.309372{col 71}{space 3} 12.99005
+{txt}{space 14}6  {c |}{col 18}{res}{space 2} 9.832949{col 30}{space 2} 2.912156{col 41}{space 1}    3.38{col 50}{space 3}0.002{col 58}{space 4} 3.955981{col 71}{space 3} 15.70992
+{txt}{space 14}7  {c |}{col 18}{res}{space 2} 11.05018{col 30}{space 2} 3.302719{col 41}{space 1}    3.35{col 50}{space 3}0.002{col 58}{space 4} 4.385021{col 71}{space 3} 17.71533
+{txt}{space 16} {c |}
+{space 11}_cons {c |}{col 18}{res}{space 2} 351.3947{col 30}{space 2} 105.8436{col 41}{space 1}    3.32{col 50}{space 3}0.002{col 58}{space 4} 137.7937{col 71}{space 3} 564.9957
+{txt}{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+         sigma_u {c |} {res} 37.047764
+         {txt}sigma_e {c |} {res} 5.1933113
+             {txt}rho {c |} {res} .98072859{txt}   (fraction of variance due to u_i)
+{hline 17}{c BT}{hline 64}
+
+{com}. 
+{txt}end of do-file
+
+{com}. exit, clear
